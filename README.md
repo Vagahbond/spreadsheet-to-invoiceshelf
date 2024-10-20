@@ -16,7 +16,8 @@ A template file takes an amount of inputs and an amout of outputs that helps it 
 
 ```toml
 
-template_name = "to use"
+invoice_name = "Some base invoice name"
+template_name = "PDF template to use"
 
 [items-inputs]
 columns = [
