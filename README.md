@@ -2,6 +2,26 @@
 
 A simple CLI program that helps creating invoices on invoiceshelf out of a spreadsheet file
 
+TO DO:
+
+- [x] Parse ODS file
+- [ ] Configuration
+  - [ ] Define default config file place and template
+  - [ ] Parse config file
+- [ ] Invoice templates
+  - [ ] Define template format
+  - [ ] Parse template
+  - [ ] Map ODS extracted data to template
+- [ ] CLI
+  - [ ] Find a suitable lib for displaying menus
+  - [ ] Establish UX path
+  - [ ] Code UX
+- [ ] InvoiceShelf
+  - [ ] Login
+  - [ ] Securely store authentication token
+  - [ ] Renew Auth token ?
+  - [ ] Send Invoice creation Query
+
 ## Configuration
 
 STI takes parameters from a configuration file to function
