@@ -1,0 +1,16 @@
+invoice_name = "ma_facture"
+template_name = "Une facture pour "
+
+[inputs]
+task = "Tâche"
+time = "Durée"
+cost = "Coût"
+
+[outputs]
+name = "${task} : ${time}"
+quantity =  "1"
+price = "${cost}"
+description = "${task}"
+sub_total = "${cost}"
+total = "${cost}"
+unit_name = "Tâche"
