@@ -66,7 +66,51 @@ impl TemplateMapping {
         Regex::new(r"\$\{([^\$]*)\}").unwrap()
     }
 
-    fn apply_line(
+    fn apply_line_number<T: std::str::FromStr>(
+        &self,
+        line: &str,
+        data: &TaskList,
+        index: usize,
+    ) -> Result<T, TemplateMappingError> {
+        let reg = Self::attr_name_regex();
+
+        let mut found = reg.captures_iter(&line);
+
+        let word = found.next();
+
+        if found.next().is_some() {
+            return Err(TemplateMappingError::TemplateMappingError(String::from(
+                "It is not supported to use anything other than a simple value for numeric fields.",
+            )));
+        }
+
+        let mut res_str = line;
+
+        if let Some(w) = word {
+            let col_token = &w[1];
+            let col_name = self.inputs.get(col_token);
+
+            if col_name.is_none() {
+                return Err(TemplateMappingError::TemplateMappingError(
+                    String::from("No input binding with specified name ") + col_token,
+                ));
+            }
+
+            res_str = &data.get(col_name.unwrap(), index).unwrap().to_string();
+        }
+
+        let as_number = str::parse::<T>(res_str);
+
+        if let Err(e) = as_number {
+            return Err(TemplateMappingError::TemplateMappingError(String::from(
+                "Value could not be parsed with wanted type.",
+            )));
+        }
+
+        return Ok(as_number.unwrap());
+    }
+
+    fn apply_line_str(
         &self,
         line: &str,
         data: &TaskList,
@@ -100,7 +144,7 @@ impl TemplateMapping {
             to_replace.push_str(&w);
             to_replace.push_str("}");
 
-            res = res.replacen(&to_replace, &task_value.unwrap(), 1);
+            res = res.replacen(&to_replace, &task_value.unwrap().to_string(), 1);
         }
 
         return Ok(res);
@@ -134,6 +178,8 @@ impl TemplateMapping {
 
 #[cfg(test)]
 mod tests {
+    use crate::spreadsheet_parsing::spreadsheet_data;
+
     use super::*;
 
     #[test]
@@ -190,7 +236,7 @@ mod tests {
     }
 
     fn get_fake_task_list() -> TaskList {
-        let mut task_hashmap = HashMap::<String, Vec<String>>::new();
+        let mut task_hashmap = HashMap::<String, Vec<spreadsheet_data::Value>>::new();
 
         task_hashmap.insert(
             String::from("Test composé"),
@@ -248,7 +294,7 @@ mod tests {
     }
 
     #[test]
-    fn apply_line() {
+    fn apply_line_str() {
         let mapping = get_fake_mapping();
         let task_list = get_fake_task_list();
 

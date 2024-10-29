@@ -14,14 +14,29 @@ pub mod spreadsheet_data {
     #[derive(Debug)]
     pub enum Value {
         String(String),
-        Number(f64),
+        Float(f64),
+        Integer(i64),
+        None,
+    }
+
+    impl Value {
+        pub fn to_string(&self) -> String {
+            match self {
+                Value::String(s) => s.clone(),
+                Value::Float(f) => f.to_string(),
+                Value::Integer(i) => i.to_string(),
+                Value::None => String::from(""),
+            }
+        }
     }
 
     impl Clone for Value {
         fn clone(&self) -> Self {
             match self {
                 Value::String(s) => Value::String(s.clone()),
-                Value::Number(f) => Value::Number(f.clone()),
+                Value::Float(f) => Value::Float(f.clone()),
+                Value::Integer(i) => Value::Integer(i.clone()),
+                Value::None => Value::None,
             }
         }
     }
@@ -71,7 +86,17 @@ pub mod spreadsheet_data {
         }
 
         fn spreadsheet_to_value(d: &Data) -> Value {
-            return Value::String(String::from("Kebab"));
+            match d {
+                Data::String(s) => Value::String(String::from(s)),
+                Data::Int(i) => Value::Integer(i.clone()),
+                Data::Float(f) => Value::Float(f.clone()),
+                Data::Bool(b) => Value::String(b.to_string()),
+                Data::DateTime(dt) => Value::String(dt.to_string()),
+                Data::DateTimeIso(dti) => Value::String(dti.to_string()),
+                Data::DurationIso(di) => Value::String(di.to_string()),
+                Data::Error(_) => Value::None,
+                Data::Empty => Value::None,
+            }
         }
 
         fn read_column(range: &Range<Data>, column: u32) -> Option<(String, Vec<Value>)> {
@@ -127,5 +152,14 @@ pub mod spreadsheet_data {
                 String::from("Spreadsheet has no data under the name: ") + header,
             ));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn placeholder() {
+        assert_eq!(2, 1 + 1);
     }
 }
