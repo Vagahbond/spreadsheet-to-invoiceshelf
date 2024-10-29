@@ -12,15 +12,30 @@ pub mod spreadsheet_data {
     }
 
     #[derive(Debug)]
-    pub struct TaskList(HashMap<String, Vec<String>>);
+    pub enum Value {
+        String(String),
+        Number(f64),
+    }
+
+    impl Clone for Value {
+        fn clone(&self) -> Self {
+            match self {
+                Value::String(s) => Value::String(s.clone()),
+                Value::Number(f) => Value::Number(f.clone()),
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct TaskList(HashMap<String, Vec<Value>>);
 
     impl TaskList {
-        pub fn from(map: HashMap<String, Vec<String>>) -> Self {
+        pub fn from(map: HashMap<String, Vec<Value>>) -> Self {
             return Self(map);
         }
 
         pub fn try_from_path(path: &str) -> Result<Self, SpreadsheetReadingError> {
-            let mut tasks = HashMap::<String, Vec<String>>::new();
+            let mut tasks = HashMap::<String, Vec<Value>>::new();
 
             let spreadsheet: Result<Ods<_>, _> = open_workbook(path);
 
@@ -55,24 +70,29 @@ pub mod spreadsheet_data {
             return Ok(TaskList(tasks));
         }
 
-        fn read_column(range: &Range<Data>, column: u32) -> Option<(String, Vec<String>)> {
+        fn spreadsheet_to_value(d: &Data) -> Value {
+            return Value::String(String::from("Kebab"));
+        }
+
+        fn read_column(range: &Range<Data>, column: u32) -> Option<(String, Vec<Value>)> {
             let header = range.get((0, column.try_into().unwrap()));
 
             if let None = header {
                 return None;
             }
 
-            let mut values: Vec<String> = Vec::new();
+            let mut values: Vec<Value> = Vec::new();
 
             for line in 1..range.height() {
                 let val = range.get((line, column.try_into().unwrap()));
 
                 if let Some(v) = val {
-                    values.push(String::from(v.to_string()));
+                    let converted = Self::spreadsheet_to_value(v);
+                    values.push(converted);
                     /* if let Data::String(s_val) = v {
                     }*/
                 } else {
-                    values.push(String::from(""));
+                    values.push(Value::String(String::from("")));
                 }
             }
 
@@ -92,7 +112,7 @@ pub mod spreadsheet_data {
             return len;
         }
 
-        pub fn get(&self, header: &str, index: usize) -> Result<String, SpreadsheetReadingError> {
+        pub fn get(&self, header: &str, index: usize) -> Result<Value, SpreadsheetReadingError> {
             if let Some(values) = self.0.get(header) {
                 if index > values.len() {
                     return Err(SpreadsheetReadingError::AccessError(String::from(

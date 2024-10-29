@@ -106,27 +106,30 @@ impl TemplateMapping {
         return Ok(res);
     }
 
-    /* pub fn apply(&mut self, list: TaskList) -> () {
-        //Vec<ComputedMappingOutput> {
-        // let mut res = Vec::<ComputedMappingOutput>::new();
-        for index in 0..(list.len()) {
-            println!(
-                "{:?}",
-                Self::fill_template_line(&self.outputs.name, &self.inputs, index, list)
-                    .unwrap_or(String::from("NaaN au fromage"))
-            )
-            /* res.push(ComputedMappingOutput {
-                name: ,
-                quantity: ,
-                price: ,
-                description: ,
-                sub_total: ,
-                total: ,
-                unit_name: ,
-            })*/
-        }
+    pub fn apply(
+        &self,
+        list: TaskList,
+    ) -> Result<Vec<ComputedMappingOutput>, TemplateMappingError> {
+        let mut res = Vec::<ComputedMappingOutput>::new();
+        //for index in 0..(list.len()) {
+        //    println!(
+        //        "{:?}",
+        //        Self::fill_template_line(&self.outputs.name, &self.inputs, index, list)
+        //            .unwrap_or(String::from("NaaN au fromage"))
+        //    )
+        /* res.push(ComputedMappingOutput {
+            name: ,
+            quantity: ,
+            price: ,
+            description: ,
+            sub_total: ,
+            total: ,
+            unit_name: ,
+        })*/
+        // }
         //return vec![];
-    } */
+        return Ok(res);
+    }
 }
 
 #[cfg(test)]
@@ -211,6 +214,16 @@ mod tests {
             ],
         );
 
+        task_hashmap.insert(
+            String::from("Test Nombres"),
+            vec![
+                String::from("1"),
+                String::from("2"),
+                String::from("3.5"),
+                String::from("6.7"),
+                String::from("0.4"),
+            ],
+        );
         return TaskList::from(task_hashmap);
     }
 
@@ -263,5 +276,21 @@ mod tests {
 
         let line_7 = mapping.apply_line("yo", &task_list, 999).unwrap();
         assert_eq!(line_7, "yo");
+    }
+
+    #[test]
+    fn apply() {
+        let mapping = get_fake_mapping();
+        let task_list = get_fake_task_list();
+
+        let items = mapping.apply(task_list).unwrap();
+
+        assert_eq!(items[0].name, "");
+        assert_eq!(items[0].description, "");
+        assert_eq!(items[0].unit_name, "");
+        assert_eq!(items[0].price, 1);
+        assert_eq!(items[0].total, 1);
+        assert_eq!(items[0].quantity, 1);
+        assert_eq!(items[0].sub_total, 1);
     }
 }
