@@ -3,6 +3,7 @@ use std::{borrow::Borrow, fs};
 use spreadsheet_parsing::spreadsheet_data::TaskList;
 use template_mapping::TemplateMapping;
 
+mod invoice_shelf;
 mod spreadsheet_parsing;
 mod template_mapping;
 
@@ -24,14 +25,16 @@ fn main() {
         return;
     }
 
-    println!("{:?}", values);
-
     let path = "/home/vagahbond/Projects/spreadsheet-to-invoiceshelf/ExampleTemplate.toml";
     let contents = fs::read_to_string(path).expect("Could not read file!");
 
-    let template_mapping = toml::from_str::<TemplateMapping>(&contents);
+    let template_mapping = toml::from_str::<TemplateMapping>(&contents).unwrap();
 
     println!("{:?}", template_mapping);
 
-    // let invoice_tasks = template_mapping.apply(values);
+    let invoice_tasks = template_mapping.apply(&values.unwrap());
+
+    println!("{:?}", invoice_tasks);
+
+    let mut invoice: invoice_shelf::Invoice;
 }

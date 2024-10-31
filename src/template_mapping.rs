@@ -1,6 +1,6 @@
 use regex::Regex;
-use serde::Deserialize;
-use std::{collections::HashMap, fs};
+use serde::{de::Error, Deserialize};
+use std::{collections::HashMap, fs, str::FromStr};
 
 use crate::spreadsheet_parsing::spreadsheet_data::TaskList;
 
@@ -9,6 +9,7 @@ pub enum TemplateMappingError {
     FileOpeningError(std::io::Error),
     ParsingError(toml::de::Error),
     TemplateMappingError(String),
+    NumberParsingError(String),
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,13 +34,14 @@ pub struct TemplateMappingOutputs {
     unit_name: String,
 }
 
+#[derive(Debug)]
 pub struct ComputedMappingOutput {
     name: String,
-    quantity: u32,
-    price: u32,
+    quantity: i64,
+    price: f64,
     description: String,
-    sub_total: u32,
-    total: u32,
+    sub_total: f64,
+    total: f64,
     unit_name: String,
 }
 
@@ -84,7 +86,7 @@ impl TemplateMapping {
             )));
         }
 
-        let mut res_str = line;
+        let mut res_str = String::from(line);
 
         if let Some(w) = word {
             let col_token = &w[1];
@@ -96,18 +98,16 @@ impl TemplateMapping {
                 ));
             }
 
-            res_str = &data.get(col_name.unwrap(), index).unwrap().to_string();
+            res_str = data.get(col_name.unwrap(), index).unwrap().to_string();
         }
 
-        let as_number = str::parse::<T>(res_str);
+        let as_number = str::parse::<T>(&res_str);
 
-        if let Err(e) = as_number {
-            return Err(TemplateMappingError::TemplateMappingError(String::from(
-                "Value could not be parsed with wanted type.",
-            )));
+        if let Ok(v) = as_number {
+            return Ok(v);
+        } else {
+            return Err(TemplateMappingError::NumberParsingError(res_str.clone()));
         }
-
-        return Ok(as_number.unwrap());
     }
 
     fn apply_line_str(
@@ -152,32 +152,66 @@ impl TemplateMapping {
 
     pub fn apply(
         &self,
-        list: TaskList,
+        list: &TaskList,
     ) -> Result<Vec<ComputedMappingOutput>, TemplateMappingError> {
         let mut res = Vec::<ComputedMappingOutput>::new();
-        //for index in 0..(list.len()) {
-        //    println!(
-        //        "{:?}",
-        //        Self::fill_template_line(&self.outputs.name, &self.inputs, index, list)
-        //            .unwrap_or(String::from("NaaN au fromage"))
-        //    )
-        /* res.push(ComputedMappingOutput {
-            name: ,
-            quantity: ,
-            price: ,
-            description: ,
-            sub_total: ,
-            total: ,
-            unit_name: ,
-        })*/
-        // }
-        //return vec![];
+        for index in 0..(list.len()) {
+            let (name, quantity, price, description, sub_total, total, unit_name) = (
+                self.apply_line_str(&self.outputs.name, list, index),
+                self.apply_line_number::<i64>(&self.outputs.quantity, list, index),
+                self.apply_line_number::<f64>(&self.outputs.price, list, index),
+                self.apply_line_str(&self.outputs.description, list, index),
+                self.apply_line_number::<f64>(&self.outputs.sub_total, list, index),
+                self.apply_line_number::<f64>(&self.outputs.total, list, index),
+                self.apply_line_str(&self.outputs.unit_name, list, index),
+            );
+
+            if name.is_err() {
+                return Err(name.unwrap_err());
+            }
+
+            if quantity.is_err() {
+                return Err(quantity.unwrap_err());
+            }
+
+            if price.is_err() {
+                return Err(price.unwrap_err());
+            }
+
+            if description.is_err() {
+                return Err(description.unwrap_err());
+            }
+
+            if sub_total.is_err() {
+                return Err(sub_total.unwrap_err());
+            }
+
+            if total.is_err() {
+                return Err(total.unwrap_err());
+            }
+
+            if unit_name.is_err() {
+                return Err(unit_name.unwrap_err());
+            }
+
+            res.push(ComputedMappingOutput {
+                name: name.unwrap(),
+                quantity: quantity.unwrap(),
+                price: price.unwrap(),
+                description: description.unwrap(),
+                sub_total: sub_total.unwrap(),
+                total: total.unwrap(),
+                unit_name: unit_name.unwrap(),
+            })
+        }
         return Ok(res);
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::f64;
+
     use crate::spreadsheet_parsing::spreadsheet_data;
 
     use super::*;
@@ -241,33 +275,44 @@ mod tests {
         task_hashmap.insert(
             String::from("Test composé"),
             vec![
-                String::from("some"),
-                String::from("things"),
-                String::from("in"),
-                String::from("an"),
-                String::from("array"),
+                spreadsheet_data::Value::String(String::from("some")),
+                spreadsheet_data::Value::String(String::from("things")),
+                spreadsheet_data::Value::String(String::from("in")),
+                spreadsheet_data::Value::String(String::from("an")),
+                spreadsheet_data::Value::String(String::from("array")),
             ],
         );
 
         task_hashmap.insert(
             String::from("Test Encore"),
             vec![
-                String::from("yet"),
-                String::from("other"),
-                String::from("things"),
-                String::from("in"),
-                String::from("there"),
+                spreadsheet_data::Value::String(String::from("yet")),
+                spreadsheet_data::Value::String(String::from("other")),
+                spreadsheet_data::Value::String(String::from("things")),
+                spreadsheet_data::Value::String(String::from("in")),
+                spreadsheet_data::Value::String(String::from("there")),
             ],
         );
 
         task_hashmap.insert(
-            String::from("Test Nombres"),
+            String::from("Test Floats"),
             vec![
-                String::from("1"),
-                String::from("2"),
-                String::from("3.5"),
-                String::from("6.7"),
-                String::from("0.4"),
+                spreadsheet_data::Value::Float(1.1),
+                spreadsheet_data::Value::Float(2.0),
+                spreadsheet_data::Value::Float(3.3),
+                spreadsheet_data::Value::Float(9.2),
+                spreadsheet_data::Value::Float(10.0),
+            ],
+        );
+
+        task_hashmap.insert(
+            String::from("Test Ints"),
+            vec![
+                spreadsheet_data::Value::Integer(1),
+                spreadsheet_data::Value::Integer(2),
+                spreadsheet_data::Value::Integer(3),
+                spreadsheet_data::Value::Integer(9),
+                spreadsheet_data::Value::Integer(10),
             ],
         );
         return TaskList::from(task_hashmap);
@@ -277,17 +322,19 @@ mod tests {
         let mut inputs = HashMap::new();
         inputs.insert(String::from("tc"), String::from("Test composé"));
         inputs.insert(String::from("te"), String::from("Test Encore"));
+        inputs.insert(String::from("tf"), String::from("Test Floats"));
+        inputs.insert(String::from("ti"), String::from("Test Ints"));
         TemplateMapping {
             template_name: String::from("test template"),
             invoice_name: String::from("test invoice"),
             inputs,
             outputs: TemplateMappingOutputs {
                 name: String::from("$nom ${tc}"),
-                quantity: String::from("1"),
-                price: String::from("1"),
+                quantity: String::from("${ti}"),
+                price: String::from("${tf}"),
                 description: String::from("${tc} ${te}"),
-                sub_total: String::from("1"),
-                total: String::from("1"),
+                sub_total: String::from("${tf}"),
+                total: String::from("${tf}"),
                 unit_name: String::from("${te}${tc}"),
             },
         }
@@ -298,30 +345,65 @@ mod tests {
         let mapping = get_fake_mapping();
         let task_list = get_fake_task_list();
 
-        let line_1 = mapping.apply_line("${tc}", &task_list, 3).unwrap();
+        let line_1 = mapping.apply_line_str("${tc}", &task_list, 3).unwrap();
         assert_eq!(line_1, "an");
 
-        let line_2 = mapping.apply_line("${tc} aaa", &task_list, 3).unwrap();
+        let line_2 = mapping.apply_line_str("${tc} aaa", &task_list, 3).unwrap();
         assert_eq!(line_2, "an aaa");
 
-        let line_3 = mapping.apply_line("${tc} ${te}", &task_list, 3).unwrap();
+        let line_3 = mapping
+            .apply_line_str("${tc} ${te}", &task_list, 3)
+            .unwrap();
         assert_eq!(line_3, "an in");
 
         let line_4 = mapping
-            .apply_line(" some ${te} where ${tc} the ", &task_list, 3)
+            .apply_line_str(" some ${te} where ${tc} the ", &task_list, 3)
             .unwrap();
         assert_eq!(line_4, " some in where an the ");
 
-        let line_5 = mapping.apply_line("yo", &task_list, 3).unwrap();
+        let line_5 = mapping.apply_line_str("yo", &task_list, 3).unwrap();
         assert_eq!(line_5, "yo");
 
         let line_6 = mapping
-            .apply_line("yo ${te} yo ${te} yo ${te}", &task_list, 3)
+            .apply_line_str("yo ${te} yo ${te} yo ${te}", &task_list, 3)
             .unwrap();
         assert_eq!(line_6, "yo in yo in yo in");
 
-        let line_7 = mapping.apply_line("yo", &task_list, 999).unwrap();
+        let line_7 = mapping.apply_line_str("yo", &task_list, 999).unwrap();
         assert_eq!(line_7, "yo");
+
+        let line_8 = mapping.apply_line_str("", &task_list, 999).unwrap();
+        assert_eq!(line_8, "");
+    }
+
+    #[test]
+    fn apply_line_number() {
+        let mapping = get_fake_mapping();
+        let task_list = get_fake_task_list();
+
+        let line_1 = mapping
+            .apply_line_number::<f64>("${tf} a", &task_list, 3)
+            .unwrap();
+        assert_eq!(line_1, 9.2);
+
+        let line_2 = mapping.apply_line_number::<f64>("${tf} ${ti}", &task_list, 3);
+        assert!(line_2.is_err());
+
+        let line_3 = mapping
+            .apply_line_number::<f64>("${tf}", &task_list, 2)
+            .unwrap();
+        assert_eq!(line_3, 3.3);
+
+        let line_4 = mapping
+            .apply_line_number::<i64>("${ti}", &task_list, 3)
+            .unwrap();
+        assert_eq!(line_4, 9);
+
+        let line_5 = mapping.apply_line_number::<f64>("yo", &task_list, 3);
+        assert!(line_5.is_err());
+
+        let line_6 = mapping.apply_line_number::<f64>("", &task_list, 3);
+        assert!(line_6.is_err());
     }
 
     #[test]
@@ -329,14 +411,46 @@ mod tests {
         let mapping = get_fake_mapping();
         let task_list = get_fake_task_list();
 
-        let items = mapping.apply(task_list).unwrap();
+        let items = mapping.apply(&task_list).unwrap();
 
-        assert_eq!(items[0].name, "");
-        assert_eq!(items[0].description, "");
-        assert_eq!(items[0].unit_name, "");
-        assert_eq!(items[0].price, 1);
-        assert_eq!(items[0].total, 1);
+        assert_eq!(items[0].name, "$nom some");
+        assert_eq!(items[0].description, "some yet");
+        assert_eq!(items[0].unit_name, "yetsome");
+        assert_eq!(items[0].price, 1.1);
+        assert_eq!(items[0].total, 1.1);
         assert_eq!(items[0].quantity, 1);
-        assert_eq!(items[0].sub_total, 1);
+        assert_eq!(items[0].sub_total, 1.1);
+
+        assert_eq!(items[1].name, "$nom things");
+        assert_eq!(items[1].description, "things other");
+        assert_eq!(items[1].unit_name, "otherthings");
+        assert_eq!(items[1].price, 2.0);
+        assert_eq!(items[1].total, 2.0);
+        assert_eq!(items[1].quantity, 2);
+        assert_eq!(items[1].sub_total, 2.0);
+
+        assert_eq!(items[2].name, "$nom in");
+        assert_eq!(items[2].description, "in things");
+        assert_eq!(items[2].unit_name, "thingsin");
+        assert_eq!(items[2].price, 3.3);
+        assert_eq!(items[2].total, 3.3);
+        assert_eq!(items[2].quantity, 3);
+        assert_eq!(items[2].sub_total, 3.3);
+
+        assert_eq!(items[3].name, "$nom an");
+        assert_eq!(items[3].description, "an in");
+        assert_eq!(items[3].unit_name, "inan");
+        assert_eq!(items[3].price, 9.2);
+        assert_eq!(items[3].total, 9.2);
+        assert_eq!(items[3].quantity, 9);
+        assert_eq!(items[3].sub_total, 9.2);
+
+        assert_eq!(items[4].name, "$nom array");
+        assert_eq!(items[4].description, "array there");
+        assert_eq!(items[4].unit_name, "therearray");
+        assert_eq!(items[4].price, 10.0);
+        assert_eq!(items[4].total, 10.0);
+        assert_eq!(items[4].quantity, 10);
+        assert_eq!(items[4].sub_total, 10.0);
     }
 }

@@ -113,9 +113,11 @@ pub mod spreadsheet_data {
 
                 if let Some(v) = val {
                     let converted = Self::spreadsheet_to_value(v);
+                    if let Value::None = converted {
+                        println!("Breaking at {:?} - {:?}", line, column);
+                        break;
+                    }
                     values.push(converted);
-                    /* if let Data::String(s_val) = v {
-                    }*/
                 } else {
                     values.push(Value::String(String::from("")));
                 }
