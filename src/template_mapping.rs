@@ -36,13 +36,13 @@ pub struct TemplateMappingOutputs {
 
 #[derive(Debug)]
 pub struct ComputedMappingOutput {
-    name: String,
-    quantity: i64,
-    price: f64,
-    description: String,
-    sub_total: f64,
-    total: f64,
-    unit_name: String,
+    pub name: String,
+    pub quantity: i64,
+    pub price: f64,
+    pub description: String,
+    pub sub_total: f64,
+    pub total: f64,
+    pub unit_name: String,
 }
 
 impl TemplateMapping {
