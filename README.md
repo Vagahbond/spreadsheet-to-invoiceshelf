@@ -5,9 +5,9 @@ A simple CLI program that helps creating invoices on invoiceshelf out of a sprea
 TO DO:
 
 - [x] Parse ODS file
-- [ ] Configuration
-  - [ ] Define default config file place and template
-  - [ ] Parse config file
+- [x] Configuration
+  - [x] Define default config file place and template
+  - [x] Parse config file
 - [x] Invoice templates
   - [x] Define template format
   - [x] Parse template
