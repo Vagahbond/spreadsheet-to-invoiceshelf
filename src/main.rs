@@ -31,8 +31,8 @@ fn main() -> ExitCode {
     let command = args.command;
 
     match command {
-        Commands::Login(sub_args) => println!("args : {:?}", sub_args),
-        Commands::Import(sub_args) => println!("args: {:?}", sub_args),
+        Commands::Login(_) => println!("NOT IMPLETMENTED YET! Come back later."),
+        Commands::Import(_) => println!("NOT IMPLETMENTED YET! Come back later."),
     }
 
     return ExitCode::SUCCESS;
