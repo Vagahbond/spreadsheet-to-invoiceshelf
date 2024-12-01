@@ -12,10 +12,10 @@ TO DO:
   - [x] Define template format
   - [x] Parse template
   - [x] Map ODS extracted data to template
-- [ ] CLI
-  - [ ] Find a suitable lib for displaying menus
-  - [ ] Establish UX path
-  - [ ] Code UX
+- [x] CLI
+  - [x] Find a suitable lib for displaying menus
+  - [x] Establish UX path
+  - [x] Code UX
 - [ ] InvoiceShelf
   - [ ] Login
   - [ ] Securely store authentication token

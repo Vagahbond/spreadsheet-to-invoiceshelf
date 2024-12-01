@@ -1,11 +1,13 @@
-use std::process::{exit, ExitCode};
+use std::process::ExitCode;
 
 use clap::Parser;
 use cli::Commands;
+use navigation::config_file_creation::create_config_file_prompt;
 
 mod app_config;
 mod cli;
 mod invoice_shelf;
+mod navigation;
 mod spreadsheet_parsing;
 mod template_mapping;
 
@@ -18,33 +20,10 @@ fn main() -> ExitCode {
 
     if let Err(e) = conf {
         match e {
-            app_config::AppConfigReadError::NoConfigFile => {
-                println!(
-                    "No config file found. Creating one with default config at {}.",
-                    args.config
-                );
-
-                if let Err(e) = app_config::AppConfig::generate(&args.config) {
-                    match e {
-                        app_config::AppConfigGenError::ConfFileSerError(e) => {
-                            println!("An error occured while creating the config ! \n {}", e);
-                            return ExitCode::FAILURE;
-                        }
-
-                        app_config::AppConfigGenError::ConfFileCreationError(e) => {
-                            println!("An error occured while creating the config ! \n {}", e);
-                            return ExitCode::FAILURE;
-                        }
-                        app_config::AppConfigGenError::ConfFilePathError => {
-                            println!("Provided path is not valid.");
-                            return ExitCode::FAILURE;
-                        }
-                    }
-                }
-            }
+            app_config::AppConfigReadError::NoConfigFile => create_config_file_prompt(&args.config),
 
             app_config::AppConfigReadError::DeserError(e) => {
-                println!("An error occured reading your Config: \n{:?}", e);
+                panic!("An error occured reading your Config: \n{}", e);
             }
         }
     }

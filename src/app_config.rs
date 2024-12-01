@@ -10,6 +10,7 @@ pub enum AppConfigReadError {
 
 #[derive(Debug)]
 pub enum AppConfigGenError {
+    ConfigFileReadError(toml::de::Error),
     ConfFileSerError(toml::ser::Error),
     ConfFileCreationError(std::io::Error),
     ConfFilePathError,
@@ -33,7 +34,11 @@ impl AppConfig {
     }
 
     pub fn default() -> Self {
-        if let Some(p) = Self::default_path().to_str() {
+        let mut config_path = Self::default_path();
+        config_path.pop();
+        config_path.push("templates/");
+
+        if let Some(p) = config_path.to_str() {
             return Self {
                 templates_dir_path: p.to_string(),
                 hostname: String::from("https://your.server.com"),
@@ -41,6 +46,15 @@ impl AppConfig {
         }
 
         panic!("Failed to instanciate a path for your system!");
+    }
+
+    pub fn default_as_string() -> String {
+        let res = toml::ser::to_string::<AppConfig>(&Self::default());
+        if let Err(_) = res {
+            panic!("The default error could not be serialized. THIS SHOULD NOT HAPPEN!");
+        }
+
+        return res.unwrap();
     }
 
     pub fn from_file(path: &str) -> Result<Self, AppConfigReadError> {
@@ -63,11 +77,9 @@ impl AppConfig {
         return Ok(conf.unwrap());
     }
 
-    pub fn generate(path: &str) -> Result<(), AppConfigGenError> {
-        let res = toml::ser::to_string::<AppConfig>(&Self::default());
-
-        if let Err(e) = res {
-            return Err(AppConfigGenError::ConfFileSerError(e));
+    pub fn generate(path: &str, content: &str) -> Result<(), AppConfigGenError> {
+        if let Err(e) = toml::from_str::<AppConfig>(content) {
+            return Err(AppConfigGenError::ConfigFileReadError(e));
         }
 
         let dir = PathBuf::try_from(path);
@@ -82,7 +94,7 @@ impl AppConfig {
             return Err(AppConfigGenError::ConfFileCreationError(e));
         }
 
-        if let Err(e) = fs::write(path, res.unwrap()) {
+        if let Err(e) = fs::write(path, content) {
             return Err(AppConfigGenError::ConfFileCreationError(e));
         }
 
