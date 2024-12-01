@@ -8,10 +8,10 @@ TO DO:
 - [ ] Configuration
   - [ ] Define default config file place and template
   - [ ] Parse config file
-- [ ] Invoice templates
-  - [ ] Define template format
-  - [ ] Parse template
-  - [ ] Map ODS extracted data to template
+- [x] Invoice templates
+  - [x] Define template format
+  - [x] Parse template
+  - [x] Map ODS extracted data to template
 - [ ] CLI
   - [ ] Find a suitable lib for displaying menus
   - [ ] Establish UX path
@@ -27,7 +27,7 @@ TO DO:
 STI takes parameters from a configuration file to function
 
 ```
-HOSTNAME=<Hostname of your invoiceshelf instance>
+hostname=<Hostname of your invoiceshelf instance>
 ```
 
 ## Template

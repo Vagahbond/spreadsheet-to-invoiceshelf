@@ -1,40 +1,60 @@
-use std::{borrow::Borrow, fs};
+use std::process::{exit, ExitCode};
 
-use spreadsheet_parsing::spreadsheet_data::TaskList;
-use template_mapping::TemplateMapping;
+use clap::Parser;
+use cli::Commands;
 
+mod app_config;
+mod cli;
 mod invoice_shelf;
 mod spreadsheet_parsing;
 mod template_mapping;
 
-fn main() {
-    let args: Vec<String> = std::env::args().collect();
+fn main() -> ExitCode {
+    // Check args
+    let args = cli::Args::parse();
 
-    if args.len() < 2 {
-        println!("Please provide the path of the file you need to parse.");
-        return;
+    // Check for configuration file
+    let conf = app_config::AppConfig::from_file(&args.config);
+
+    if let Err(e) = conf {
+        match e {
+            app_config::AppConfigReadError::NoConfigFile => {
+                println!(
+                    "No config file found. Creating one with default config at {}.",
+                    args.config
+                );
+
+                if let Err(e) = app_config::AppConfig::generate(&args.config) {
+                    match e {
+                        app_config::AppConfigGenError::ConfFileSerError(e) => {
+                            println!("An error occured while creating the config ! \n {}", e);
+                            return ExitCode::FAILURE;
+                        }
+
+                        app_config::AppConfigGenError::ConfFileCreationError(e) => {
+                            println!("An error occured while creating the config ! \n {}", e);
+                            return ExitCode::FAILURE;
+                        }
+                        app_config::AppConfigGenError::ConfFilePathError => {
+                            println!("Provided path is not valid.");
+                            return ExitCode::FAILURE;
+                        }
+                    }
+                }
+            }
+
+            app_config::AppConfigReadError::DeserError(e) => {
+                println!("An error occured reading your Config: \n{:?}", e);
+            }
+        }
     }
 
-    let values = TaskList::try_from_path(&args[1]);
+    let command = args.command;
 
-    if let Err(e) = values {
-        print!(
-            "An error occured while reading your spreadsheet file, {:?}",
-            e
-        );
-        return;
+    match command {
+        Commands::Login(sub_args) => println!("args : {:?}", sub_args),
+        Commands::Import(sub_args) => println!("args: {:?}", sub_args),
     }
 
-    let path = "/home/vagahbond/Projects/spreadsheet-to-invoiceshelf/ExampleTemplate.toml";
-    let contents = fs::read_to_string(path).expect("Could not read file!");
-
-    let template_mapping = toml::from_str::<TemplateMapping>(&contents).unwrap();
-
-    println!("{:?}", template_mapping);
-
-    let invoice_tasks = template_mapping.apply(&values.unwrap());
-
-    println!("{:?}", invoice_tasks);
-
-    let mut invoice: invoice_shelf::Invoice;
+    return ExitCode::SUCCESS;
 }

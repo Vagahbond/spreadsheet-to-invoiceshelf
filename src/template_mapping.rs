@@ -1,6 +1,6 @@
 use regex::Regex;
-use serde::{de::Error, Deserialize};
-use std::{collections::HashMap, fs, str::FromStr};
+use serde::Deserialize;
+use std::{collections::HashMap, fs};
 
 use crate::spreadsheet_parsing::spreadsheet_data::TaskList;
 

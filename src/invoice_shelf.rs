@@ -1,5 +1,3 @@
-use std::path::PrefixComponent;
-
 use crate::template_mapping::ComputedMappingOutput;
 
 pub struct Invoice {
