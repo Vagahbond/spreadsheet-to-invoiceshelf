@@ -8,7 +8,8 @@
   in {
     devShells.${system} = {
       default = pkgs.mkShell {
-        buildInputs = [pkgs.cargo pkgs.rustc];
+        nativeBuildInputs = [pkgs.pkg-config];
+        buildInputs = [pkgs.cargo pkgs.rustc pkgs.openssl];
       };
     };
   };

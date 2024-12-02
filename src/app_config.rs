@@ -18,8 +18,9 @@ pub enum AppConfigGenError {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppConfig {
-    templates_dir_path: String,
-    hostname: String,
+    pub session_token_dir_path: String,
+    pub templates_dir_path: String,
+    pub hostname: String,
 }
 
 impl AppConfig {
@@ -34,18 +35,27 @@ impl AppConfig {
     }
 
     pub fn default() -> Self {
-        let mut config_path = Self::default_path();
-        config_path.pop();
-        config_path.push("templates/");
+        let mut templates_path = Self::default_path();
+        templates_path.pop();
+        templates_path.push("templates/");
 
-        if let Some(p) = config_path.to_str() {
-            return Self {
-                templates_dir_path: p.to_string(),
-                hostname: String::from("https://your.server.com"),
-            };
+        let mut session_token_dir_path = Self::default_path();
+        session_token_dir_path.pop();
+        session_token_dir_path.push("session");
+
+        if let None = templates_path.to_str() {
+            panic!("Failed to instanciate a path for your templates!");
         }
 
-        panic!("Failed to instanciate a path for your system!");
+        if let None = session_token_dir_path.to_str() {
+            panic!("Failed to instanciate a path for your token!");
+        }
+
+        return Self {
+            templates_dir_path: templates_path.to_str().unwrap().to_string(),
+            hostname: String::from("https://your.server.com"),
+            session_token_dir_path: session_token_dir_path.to_str().unwrap().to_string(),
+        };
     }
 
     pub fn default_as_string() -> String {

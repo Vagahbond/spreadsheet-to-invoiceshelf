@@ -2,7 +2,7 @@ use inquire::{Confirm, Editor};
 
 use crate::app_config::{self, AppConfig};
 
-pub fn create_config_file_prompt(config_path: &str) {
+pub fn create_config_file_prompt(config_path: &str) -> String {
     println!("No config file found at {}.", config_path);
 
     let create_answer = Confirm::new("Do you want to create a fresh one ?")
@@ -18,7 +18,7 @@ pub fn create_config_file_prompt(config_path: &str) {
     }
 
     if !create_answer.unwrap() {
-        return;
+        panic!("Exiting...");
     }
 
     let mut config = AppConfig::default_as_string();
@@ -53,7 +53,8 @@ pub fn create_config_file_prompt(config_path: &str) {
                 }
             }
         } else {
-            return;
+            println!("Config file created successfully !");
+            return u_edited_config;
         }
     }
 }

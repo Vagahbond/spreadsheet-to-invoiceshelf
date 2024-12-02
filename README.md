@@ -17,7 +17,7 @@ TO DO:
   - [x] Establish UX path
   - [x] Code UX
 - [ ] InvoiceShelf
-  - [ ] Login
+  - [x] Login
   - [ ] Securely store authentication token
   - [ ] Renew Auth token ?
   - [ ] Send Invoice creation Query

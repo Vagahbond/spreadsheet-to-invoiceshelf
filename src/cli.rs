@@ -37,9 +37,9 @@ pub struct ImportArgs {
 pub struct LoginArgs {
     /// Your username on InvoiceShelf
     #[arg(short, long)]
-    username: String,
+    pub username: Option<String>,
 
     /// Your password on InvoiceShelf
     #[arg(short, long)]
-    password: String,
+    pub password: Option<String>,
 }
