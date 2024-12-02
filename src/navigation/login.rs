@@ -53,6 +53,12 @@ pub fn login_prompt(username: &Option<String>, password: &Option<String>, config
                     e
                 )
             }
+            crate::session::SessionOpeningError::WriteError(e) => {
+                panic!(
+                    "Something wrong happened while contacting your sever :  {:?}",
+                    e
+                )
+            }
         }
     }
 }

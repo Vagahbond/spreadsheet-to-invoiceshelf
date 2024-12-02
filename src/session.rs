@@ -1,3 +1,5 @@
+use std::{fs, path::PathBuf};
+
 use reqwest::StatusCode;
 
 use crate::app_config::AppConfig;
@@ -19,6 +21,14 @@ pub enum SessionOpeningError {
     NetworkingError(reqwest::Error),
     WrongCreds(String),
     HttpError(String),
+    WriteError(TokenWriteReadError),
+}
+
+#[derive(Debug)]
+pub enum TokenWriteReadError {
+    TokenPathResolveError,
+    TokenFileCreationError(std::io::Error),
+    TokenDirCreationError(std::io::Error),
 }
 
 impl Session {
@@ -55,7 +65,11 @@ impl Session {
                 if let Err(_) = parsed {
                     panic!("Failed to parse json response !!");
                 }
-                parsed.unwrap().write_token();
+
+                if let Err(e) = parsed.unwrap().write_token(&config.session_token_dir_path) {
+                    return Err(SessionOpeningError::WriteError(e));
+                }
+
                 return Ok(());
             }
             StatusCode::UNPROCESSABLE_ENTITY => {
@@ -65,6 +79,24 @@ impl Session {
         }
     }
 
-    fn write_token(&self) {}
+    fn write_token(&self, session_path: &str) -> Result<(), TokenWriteReadError> {
+        let dir = PathBuf::try_from(session_path);
+
+        if let Err(_) = dir {
+            return Err(TokenWriteReadError::TokenPathResolveError);
+        }
+
+        let u_dir = dir.unwrap().pop();
+
+        if let Err(e) = fs::create_dir_all(u_dir.to_string()) {
+            return Err(TokenWriteReadError::TokenDirCreationError(e));
+        }
+
+        if let Err(e) = fs::write(session_path, self.token.clone().to_string()) {
+            return Err(TokenWriteReadError::TokenFileCreationError(e));
+        }
+        return Ok(());
+    }
+
     pub fn resume(session_path: &str) {}
 }
