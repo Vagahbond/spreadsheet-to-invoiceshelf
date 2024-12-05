@@ -2,11 +2,12 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use cli::Commands;
-use navigation::{config_file_creation::create_config_file_prompt, login::login_prompt};
+use navigation::{
+    config_file_creation::create_config_file_prompt, import::import_prompt, login::login_prompt,
+};
 
 mod app_config;
 mod cli;
-mod invoice_shelf;
 mod navigation;
 mod session;
 mod spreadsheet_parsing;
@@ -23,7 +24,7 @@ fn main() -> ExitCode {
         match e {
             app_config::AppConfigReadError::NoConfigFile => {
                 let new_conf = create_config_file_prompt(&args.config);
-                parsed_conf = app_config::AppConfig::from_file(&new_conf);
+                parsed_conf = Ok(new_conf);
             }
 
             app_config::AppConfigReadError::DeserError(e) => {
@@ -33,11 +34,12 @@ fn main() -> ExitCode {
     }
 
     let command = args.command;
+
     match command {
         Commands::Login(args) => {
             login_prompt(&args.username, &args.password, &parsed_conf.unwrap())
         }
-        Commands::Import(_) => println!("NOT IMPLETMENTED YET! Come back later."),
+        Commands::Import(args) => import_prompt(&parsed_conf.unwrap(), &args),
     }
     return ExitCode::SUCCESS;
 }

@@ -2,7 +2,7 @@ use inquire::{Confirm, Editor};
 
 use crate::app_config::{self, AppConfig};
 
-pub fn create_config_file_prompt(config_path: &str) -> String {
+pub fn create_config_file_prompt(config_path: &str) -> AppConfig {
     println!("No config file found at {}.", config_path);
 
     let create_answer = Confirm::new("Do you want to create a fresh one ?")
@@ -35,7 +35,9 @@ pub fn create_config_file_prompt(config_path: &str) -> String {
 
         let u_edited_config = edited_config.unwrap();
 
-        if let Err(e) = app_config::AppConfig::generate(config_path, &u_edited_config) {
+        let parsed = app_config::AppConfig::generate(config_path, &u_edited_config);
+
+        if let Err(e) = parsed {
             match e {
                 app_config::AppConfigGenError::ConfFileSerError(e) => {
                     panic!("An error occured while creating the config ! \n {}", e);
@@ -54,7 +56,7 @@ pub fn create_config_file_prompt(config_path: &str) -> String {
             }
         } else {
             println!("Config file created successfully !");
-            return u_edited_config;
+            return parsed.unwrap();
         }
     }
 }

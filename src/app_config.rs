@@ -87,8 +87,10 @@ impl AppConfig {
         return Ok(conf.unwrap());
     }
 
-    pub fn generate(path: &str, content: &str) -> Result<(), AppConfigGenError> {
-        if let Err(e) = toml::from_str::<AppConfig>(content) {
+    pub fn generate(path: &str, content: &str) -> Result<AppConfig, AppConfigGenError> {
+        let instance = toml::from_str::<AppConfig>(content);
+
+        if let Err(e) = instance {
             return Err(AppConfigGenError::ConfigFileReadError(e));
         }
 
@@ -98,16 +100,22 @@ impl AppConfig {
             return Err(AppConfigGenError::ConfFilePathError);
         }
 
-        let u_dir = dir.unwrap().pop();
+        let mut u_dir = dir.unwrap();
 
-        if let Err(e) = fs::create_dir_all(u_dir.to_string()) {
+        u_dir.pop();
+
+        println!("Creating conf file dir at {}", u_dir.to_str().unwrap());
+
+        if let Err(e) = fs::create_dir_all(u_dir.to_str().unwrap()) {
             return Err(AppConfigGenError::ConfFileCreationError(e));
         }
+
+        println!("Creating conf file at {}", path);
 
         if let Err(e) = fs::write(path, content) {
             return Err(AppConfigGenError::ConfFileCreationError(e));
         }
 
-        return Ok(());
+        return Ok(instance.unwrap());
     }
 }

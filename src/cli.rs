@@ -29,8 +29,12 @@ pub enum Commands {
 #[derive(Parser, Debug)]
 pub struct ImportArgs {
     /// Path to the template file
-    #[arg(short, long, default_value_t = String::from("./Template.toml"))]
-    template: String,
+    #[arg(short, long)]
+    pub template: String,
+
+    /// Path to the spreadsheet file
+    #[arg(short, long)]
+    pub spreadsheet: String,
 }
 
 #[derive(Parser, Debug)]
