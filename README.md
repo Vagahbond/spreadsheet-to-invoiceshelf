@@ -41,17 +41,17 @@ template_name = "PDF template to use"
 
 [items-inputs]
 columns = [
-    "Tâche"
-    "Durée"
+    "Tâche",
+    "Durée",
     "Coût"
 ]
 
 [items-outputs]
-name = "${Tâche} : ${Durée}",
-quantity =  1,
-price = "${Coût}",
-description = "${Tâche}",
-sub_total = "${Coût}",
-total = "${Coût}",
-unit_name = "Tâche",
+name = "${Tâche} : ${Durée}"
+quantity =  1
+price = "${Coût}"
+description = "${Tâche}"
+sub_total = "${Coût}"
+total = "${Coût}"
+unit_name = "Tâche"
 ```
